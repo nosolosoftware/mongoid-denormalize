@@ -1,4 +1,5 @@
 # Mongoid::Denormalize
+[![Build Status](https://travis-ci.org/rjurado01/mongoid-denormalize.svg?branch=master)
 
 Helper module for denormalizing association attributes in Mongoid models
 
