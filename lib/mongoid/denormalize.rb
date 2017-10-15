@@ -27,12 +27,17 @@ module Mongoid
         end
 
         from_class = (relations[from].class_name || relations[from].name.capitalize).constantize
-        inverse_of = relations[from].inverse_of || model_name.route_key
+        model_class = model_name.name
+        inverse_of = relations[from].inverse_of || model_name.route_key.pluralize
 
         # When 'from' is updated, update all childs
         from_class.send(:after_update) do
           attributes = {}
           args.each { |field| attributes["#{from}_#{field}"] = send(field) }
+
+          unless relations[inverse_of.to_s]
+            raise "Option :inverse_of is needed for 'belongs_to :#{from}' into #{model_class}."
+          end
 
           send(inverse_of).update_all('$set' => attributes)
         end
