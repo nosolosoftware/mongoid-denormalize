@@ -21,7 +21,69 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+In your model:
+
+```ruby
+# Include the helper method
+include Mongoid::Denormalize
+
+# Define your denormalized fields
+denormalize :name, :email, from: :user
+```
+
+You need to add `inverse_of` to `belongs_to` side if `has_many` target name is diferent from model:
+
+```ruby
+class Club
+  ...
+  has_many :members, class_name: 'User'
+end
+
+class User
+  ...
+  belogns_to club, inverse_of: :members
+
+  denormalize :name, from: :club
+end
+```
+
+## Example
+
+```ruby
+class User
+  include Mongoid::Document
+  include Mongoid::Denormalize
+
+  field :name
+
+  has_many :books
+end
+
+class Book
+  include Mongoid::Document
+  include Mongoid::Denormalize
+
+  field :title
+
+  belongs_to :author
+
+  denormalize :name, from: :author
+end
+
+>> user = User.create(name: 'User1')
+>> book = Book.create(title: 'Title', author: user)
+>> book.author_name
+"User1"
+
+>> user.update_attributes(name: 'User1.1')
+>> book.reload.author_name
+"User1.1"
+
+>> new_user = User.create(name: 'User2')
+>> book.update_attributes(author: new_user)
+>> book.reload.author_name
+"User2"
+```
 
 ## Development
 
