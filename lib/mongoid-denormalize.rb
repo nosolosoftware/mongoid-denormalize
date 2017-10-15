@@ -1,4 +1,4 @@
-require "mongoid/denormalize/version"
+require "mongoid-denormalize/version"
 
 module Mongoid
   module Denormalize

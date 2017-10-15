@@ -1,6 +1,6 @@
 require 'bundler/setup'
 require 'mongoid'
-require 'mongoid/denormalize'
+require 'mongoid-denormalize'
 
 Mongoid.load!('spec/support/mongoid.yml', :test)
 

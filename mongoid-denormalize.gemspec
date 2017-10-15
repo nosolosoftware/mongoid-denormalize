@@ -2,7 +2,7 @@
 
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'mongoid/denormalize/version'
+require 'mongoid-denormalize/version'
 
 Gem::Specification.new do |spec|
   spec.name          = 'mongoid-denormalize'
