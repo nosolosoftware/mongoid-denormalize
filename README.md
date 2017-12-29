@@ -31,7 +31,7 @@ include Mongoid::Denormalize
 denormalize :name, :email, from: :user
 ```
 
-You need to add `inverse_of` to `belongs_to` side if `has_many` target name is diferent from model:
+You need to add `inverse_of` to `belongs_to` side if relation name is diferent from model:
 
 ```ruby
 class Club
@@ -52,7 +52,6 @@ end
 ```ruby
 class User
   include Mongoid::Document
-  include Mongoid::Denormalize
 
   field :name
 

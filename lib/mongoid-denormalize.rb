@@ -27,19 +27,31 @@ module Mongoid
         end
 
         from_class = (relations[from].class_name || relations[from].name.capitalize).constantize
-        model_class = model_name.name
-        inverse_of = relations[from].inverse_of || model_name.route_key.pluralize
+        child_model_name = model_name
+        child_inverse_of = relations[from].inverse_of
 
-        # When 'from' is updated, update all childs
+        # When 'from' is updated, update child/childs
         from_class.send(:after_update) do
           attributes = {}
           args.each { |field| attributes["#{from}_#{field}"] = send(field) }
 
-          unless relations[inverse_of.to_s]
-            raise "Option :inverse_of is needed for 'belongs_to :#{from}' into #{model_class}."
+          relation = relations[child_inverse_of.to_s] ||
+                     relations[child_model_name.plural] ||
+                     relations[child_model_name.singular]
+
+          unless relation
+            raise "Option :inverse_of is needed for 'belongs_to :#{from}' into #{child_model_name.name}."
           end
 
-          send(inverse_of).update_all('$set' => attributes)
+          case relation.relation.to_s
+          when 'Mongoid::Relations::Referenced::One'
+            document = send(relation.name)
+            document.collection.update_one({_id: document._id}, {'$set' => attributes}) if document
+          when 'Mongoid::Relations::Referenced::Many'
+            send(relation.name).update_all('$set' => attributes)
+          else
+            raise "Relation type unsupported: #{relation.relation}"
+          end
         end
       end
     end

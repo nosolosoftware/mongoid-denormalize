@@ -30,7 +30,6 @@ RSpec.describe Mongoid::Denormalize do
         before :all do
           class Parent
             include Mongoid::Document
-            include Mongoid::Denormalize
 
             field :name
             has_many :children
@@ -85,7 +84,6 @@ RSpec.describe Mongoid::Denormalize do
         before :all do
           class Parent
             include Mongoid::Document
-            include Mongoid::Denormalize
 
             field :name
             has_many :children
@@ -121,7 +119,6 @@ RSpec.describe Mongoid::Denormalize do
             before :all do
               class Parent
                 include Mongoid::Document
-                include Mongoid::Denormalize
 
                 field :name
                 has_many :items, class_name: 'Child'
@@ -157,7 +154,6 @@ RSpec.describe Mongoid::Denormalize do
             before :all do
               class Parent
                 include Mongoid::Document
-                include Mongoid::Denormalize
 
                 field :name
                 has_many :items, class_name: 'Child'
@@ -183,6 +179,49 @@ RSpec.describe Mongoid::Denormalize do
 
               parent.update_attributes(name: 'new_name')
               expect(child.reload.parent_name).to eq('new_name')
+            end
+          end
+        end
+
+        context 'when relations is :has_one' do
+          context 'when updates parent denormalized field' do
+            before :all do
+              class Parent
+                include Mongoid::Document
+
+                field :name
+                has_one :child, class_name: 'Child'
+              end
+
+              class Child
+                include Mongoid::Document
+                include Mongoid::Denormalize
+
+                belongs_to :parent, inverse_of: :child
+                denormalize :name, from: :parent
+              end
+            end
+
+            after :all do
+              Object.send(:remove_const, :Parent)
+              Object.send(:remove_const, :Child)
+            end
+
+            context 'when child exists' do
+              it 'updates childs denormalized fields' do
+                parent = Parent.create!(name: 'parent')
+                child = Child.create!(parent: parent)
+
+                parent.update_attributes(name: 'new_name')
+                expect(child.reload.parent_name).to eq('new_name')
+              end
+            end
+
+            context 'when child does not exist' do
+              it 'do anything' do
+                parent = Parent.create!(name: 'parent')
+                parent.update_attributes(name: 'new_name')
+              end
             end
           end
         end
