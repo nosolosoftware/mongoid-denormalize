@@ -7,33 +7,68 @@ module Mongoid
     end
 
     module ClassMethods
-      def denormalize(*args)
-        options = args.pop
+      def denormalize(*fields)
+        @_denormalize_options = fields.pop
+        @_denormalize_fields = fields
 
-        unless options.is_a?(Hash) && (from = options[:from]&.to_s)
+        unless @_denormalize_options.is_a?(Hash) && (from = @_denormalize_options[:from]&.to_s)
           raise ArgumentError, 'Option :from is needed (e.g. delegate :name, from: :user).'
         end
 
+        if @_denormalize_options.include?(:as) && fields.size > 1
+          raise ArgumentError, 'When option :as is used only one unique field could be specified.'
+        end
+
+        @_denormalize_fields.map! { |field| {name_in_children: name_for_field(field), name_in_parent: field} }
+
         # Add fields to model
-        args.each { |field| field "#{from}_#{field}" }
+        @_denormalize_fields.each { |field| field field[:name_in_children] }
 
         # Denormalize fields when model is saved and 'from' has changed
         before_save do
           if send(from) && send("#{from}_id_changed?")
-            args.each do |field|
-              send("#{from}_#{field}=", send(from).send(field))
+            fields.each do |field|
+              send("#{field[:name_in_children]}=", send(from).send(field[:name_in_parent])) if send(from).respond_to?(field[:name_in_parent])
             end
           end
         end
 
-        from_class = (relations[from].class_name || relations[from].name.capitalize).constantize
+        if relations[from].polymorphic?
+          unless (inverses_of = @_denormalize_options[:inverses_of] || inverses_of.is_a?(Array))
+            raise ArgumentError, 'Option :inverses_of is needed with an Array when the relation is polymorphic.'
+          end
+
+          inverses_of.each do |inverse_of|
+            from_class = inverse_of.to_s.capitalize.constantize
+            send_after_update_hook(from_class)
+          end
+        else
+          from_class = (relations[from].class_name || relations[from].name.capitalize).constantize
+          send_after_update_hook(from_class)
+        end
+      end
+
+      protected
+
+      def name_for_field(field)
+        return @_denormalize_options[:as] if @_denormalize_options.include?(:as)
+        return "#{@_denormalize_options[:prefix]}_#{field}" if @_denormalize_options.include?(:prefix)
+        "#{@_denormalize_options[:from]}_#{field}"
+      end
+
+      def send_after_update_hook(from_class)
+        from = @_denormalize_options[:from].to_s
+        fields = @_denormalize_fields
         child_model_name = model_name
         child_inverse_of = relations[from].inverse_of
 
         # When 'from' is updated, update child/childs
         from_class.send(:after_update) do
           attributes = {}
-          args.each { |field| attributes["#{from}_#{field}"] = send(field) }
+          fields.select { |field| respond_to?(field[:name_in_parent]) }
+                .each { |field| attributes[field[:name_in_children]] = send(field[:name_in_parent]) }
+
+          next if attributes.blank?
 
           relation = relations[child_inverse_of.to_s] ||
                      relations[child_model_name.plural] ||

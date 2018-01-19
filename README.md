@@ -47,6 +47,46 @@ class User
 end
 ```
 
+### Options of denormalize
+
+#### inverses\_of: for polymorphic relations
+
+In case where the relation is polymorphic you must add `inverses_of` with the name of the possible clasess of the other side of the relation as:
+
+```ruby
+class Club
+  ...
+  has_many :members
+end
+
+class User
+  ...
+  belogns_to club, inverse_of: :members, polymorphic: true
+
+  denormalize :name, from: :club, inverses_of: %i[club]
+end
+```
+
+#### as: enables to customize the final field name
+
+Only one unique field could be passed as argument, like this:
+
+```ruby
+  denormalize :name, from: :top, as: :supername
+```
+
+It will create a `supername` field with the content of `top.name`.
+
+#### prefix: enables to customize the prefix of the final name
+
+In somes cases it could be interesting to customize the prefix of the final name, instead of using the basic `from_field`
+
+```ruby
+  denormalize :color, :name, from: :top, prefix: :ancestor
+```
+
+It will create the fields `ancestor_name` and `ancestor_color` with the content of `top.name` and `top.color`.
+
 ## Example
 
 ```ruby
