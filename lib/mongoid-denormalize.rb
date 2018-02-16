@@ -8,50 +8,84 @@ module Mongoid
 
     module ClassMethods
       def denormalize(*args)
-        options = args.pop
+        *fields, options = args
 
-        unless options.is_a?(Hash) && (from = options[:from]&.to_s)
-          raise ArgumentError, 'Option :from is needed (e.g. delegate :name, from: :user).'
+        unless options.is_a?(Hash) && options[:from]
+          raise ArgumentError, 'Option :from is needed (e.g. denormalize :name, from: :user).'
         end
+
+        fields = Mongoid::Denormalize.get_fields_with_names(fields, options)
 
         # Add fields to model
-        args.each { |field| field "#{from}_#{field}" }
+        fields.each { |field| field field[:as] }
 
-        # Denormalize fields when model is saved and 'from' has changed
-        before_save do
-          if send(from) && send("#{from}_id_changed?")
-            args.each do |field|
-              send("#{from}_#{field}=", send(from).send(field))
-            end
-          end
+        # Add hooks
+        Mongoid::Denormalize.add_hook_to_child(self, fields, options)
+        Mongoid::Denormalize.add_hook_to_parent(self, fields, options)
+      end
+    end
+
+    # Check options and return name for each field
+    def self.get_fields_with_names(fields, options)
+      if options.include?(:as)
+        options[:as] = [options[:as]] unless options[:as].is_a?(Array)
+
+        unless fields.size == options[:as].size
+          raise ArgumentError, 'When option :as is used you must pass a name for each field.'
         end
 
-        from_class = (relations[from].class_name || relations[from].name.capitalize).constantize
-        child_model_name = model_name
-        child_inverse_of = relations[from].inverse_of
+        return fields.map.with_index { |field, index| {name: field, as: options[:as][index]} }
+      elsif options.include?(:prefix)
+        return fields.map { |field| {name: field, as: "#{options[:prefix]}_#{field}"} }
+      end
 
-        # When 'from' is updated, update child/childs
-        from_class.send(:after_update) do
-          attributes = {}
-          args.each { |field| attributes["#{from}_#{field}"] = send(field) }
+      fields.map { |field| {name: field, as: "#{options[:from]}_#{field}"} }
+    end
 
-          relation = relations[child_inverse_of.to_s] ||
-                     relations[child_model_name.plural] ||
-                     relations[child_model_name.singular]
+    # Add hook to child class to denormalize fields when parent relation is changed
+    def self.add_hook_to_child(child_class, fields, options)
+      from = options[:from].to_s
 
-          unless relation
-            raise "Option :inverse_of is needed for 'belongs_to :#{from}' into #{child_model_name.name}."
+      child_class.send(options[:child_callback] || 'before_save') do
+        if send(from) && send("#{from}_id_changed?")
+          fields.each do |field|
+            send("#{field[:as]}=", send(from).send(field[:name]))
           end
+        end
+      end
+    end
 
-          case relation.relation.to_s
-          when 'Mongoid::Relations::Referenced::One'
-            document = send(relation.name)
-            document.collection.update_one({_id: document._id}, {'$set' => attributes}) if document
-          when 'Mongoid::Relations::Referenced::Many'
-            send(relation.name).update_all('$set' => attributes)
-          else
-            raise "Relation type unsupported: #{relation.relation}"
+    # Add hook to parent class to denormalize fields when parent object is updated
+    def self.add_hook_to_parent(child_class, fields, options)
+      from = options[:from].to_s
+
+      parent = (child_class.relations[from].class_name ||
+                child_class.relations[from].name.capitalize).constantize
+
+      relation = parent.relations[child_class.relations[from].inverse_of.to_s] ||
+                 parent.relations[child_class.model_name.plural] ||
+                 parent.relations[child_class.model_name.singular]
+
+      unless relation
+        raise "Option :inverse_of is needed for 'belongs_to :#{from}' into #{child_class}."
+      end
+
+      parent.after_update do
+        attributes = {}
+        fields.each do |field|
+          attributes[field[:as]] = send(field[:name]) if send("#{field[:name]}_changed?")
+        end
+        next if attributes.blank?
+
+        case relation.relation.to_s
+        when 'Mongoid::Relations::Referenced::One'
+          if (document = send(relation.name))
+            document.collection.update_one({_id: document._id}, {'$set' => attributes})
           end
+        when 'Mongoid::Relations::Referenced::Many'
+          send(relation.name).update_all('$set' => attributes)
+        else
+          raise "Relation type unsupported: #{relation.relation}"
         end
       end
     end

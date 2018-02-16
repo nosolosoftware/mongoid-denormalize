@@ -84,6 +84,45 @@ end
 "User2"
 ```
 
+## Options of denormalize
+
+### as
+
+Enables to customize the final field name
+
+```ruby
+  denormalize :name, from: :top, as: :custom_name
+```
+
+It will create the field `custom_name` with the content of `top.name`. Also support an array:
+
+```ruby
+  denormalize :name, :age, from: :top, as: [:custom_name, :custom_age]
+```
+
+### prefix
+
+In somes cases it could be interesting to customize the prefix of the final name, instead of using the basic `from_field`
+
+```ruby
+  denormalize :color, :name, from: :top, prefix: :ancestor
+```
+
+It will create the fields `ancestor_name` and `ancestor_color` with the content of `top.name` and `top.color`.
+
+### child_callback
+
+By default when a child is created the denormalization is executed into `before_save` hook.  
+This option let you change this callback by other, for example:
+
+```ruby
+  denormalize :name, from: :top, child_callback: :before_validation
+
+  validate :top_name, presence: true
+```
+
+It will denormalize field `name` into `before_validation` callback so that we can validate it.
+
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
