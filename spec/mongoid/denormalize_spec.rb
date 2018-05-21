@@ -13,7 +13,7 @@ RSpec.describe Mongoid::Denormalize do
             class Parent
               include Mongoid::Document
 
-              field :name
+              field :name, type: String
               has_many :children
             end
 
@@ -29,6 +29,12 @@ RSpec.describe Mongoid::Denormalize do
           after :all do
             Object.send(:remove_const, :Parent)
             Object.send(:remove_const, :Child)
+          end
+
+          it 'has correct types' do
+            expect(Child.fields['parent_name'].options[:type]).to eq(
+              Parent.fields['name'].options[:type]
+            )
           end
 
           context 'when creates new document' do
@@ -67,7 +73,7 @@ RSpec.describe Mongoid::Denormalize do
             class Parent
               include Mongoid::Document
 
-              field :name
+              field :name, type: String
               has_many :children
             end
 
@@ -83,6 +89,12 @@ RSpec.describe Mongoid::Denormalize do
           after :all do
             Object.send(:remove_const, :Parent)
             Object.send(:remove_const, :Child)
+          end
+
+          it 'has correct types' do
+            expect(Child.fields['top_name'].options[:type]).to eq(
+              Parent.fields['name'].options[:type]
+            )
           end
 
           context 'when creates new document' do
@@ -133,7 +145,7 @@ RSpec.describe Mongoid::Denormalize do
                 class Parent
                   include Mongoid::Document
 
-                  field :name
+                  field :name, type: String
                   has_many :items, class_name: 'Child'
                 end
 
@@ -149,6 +161,12 @@ RSpec.describe Mongoid::Denormalize do
               after :all do
                 Object.send(:remove_const, :Parent)
                 Object.send(:remove_const, :Child)
+              end
+
+              it 'has correct types' do
+                expect(Child.fields['parent_name'].options[:type]).to eq(
+                  Parent.fields['name'].options[:type]
+                )
               end
 
               it 'updates childs denormalized fields' do
@@ -169,7 +187,7 @@ RSpec.describe Mongoid::Denormalize do
             class Parent
               include Mongoid::Document
 
-              field :name
+              field :name, type: String
               has_one :child, class_name: 'Child'
             end
 
@@ -185,6 +203,12 @@ RSpec.describe Mongoid::Denormalize do
           after :all do
             Object.send(:remove_const, :Parent)
             Object.send(:remove_const, :Child)
+          end
+
+          it 'has correct types' do
+            expect(Child.fields['parent_name'].options[:type]).to eq(
+              Parent.fields['name'].options[:type]
+            )
           end
 
           context 'when child exists' do
@@ -237,9 +261,9 @@ RSpec.describe Mongoid::Denormalize do
             class Parent
               include Mongoid::Document
 
-              field :name
-              field :age
-              field :city
+              field :name, type: String
+              field :age,  type: Integer
+              field :city, type: String
               has_many :children
             end
 
@@ -256,6 +280,14 @@ RSpec.describe Mongoid::Denormalize do
           after :all do
             Object.send(:remove_const, :Parent)
             Object.send(:remove_const, :Child)
+          end
+
+          it 'has correct types' do
+            %w[name age city].each do |field|
+              expect(Child.fields["custom_#{field}"].options[:type]).to eq(
+                Parent.fields[field].options[:type]
+              )
+            end
           end
 
           context 'when creates new document' do
@@ -359,6 +391,12 @@ RSpec.describe Mongoid::Denormalize do
           after :all do
             Object.send(:remove_const, :Parent)
             Object.send(:remove_const, :Child)
+          end
+
+          it 'has correct types' do
+            expect(Child.fields['new_prefix_name'].options[:type]).to eq(
+              Parent.fields['name'].options[:type]
+            )
           end
 
           context 'when creates new document' do
