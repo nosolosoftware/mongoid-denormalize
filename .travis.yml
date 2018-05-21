@@ -4,7 +4,7 @@ rvm:
   - 2.3.4
 before_install: gem install bundler -v 1.15.4
 
-gemfiles:
+gemfile:
   - Gemfile
   - gemfiles/mongoid-5.0.gemfile
   - gemfiles/mongoid-6.0.gemfile
