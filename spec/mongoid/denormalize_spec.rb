@@ -21,7 +21,7 @@ RSpec.describe Mongoid::Denormalize do
               include Mongoid::Document
               include Mongoid::Denormalize
 
-              belongs_to :parent
+              belongs_to :parent, optional: true
               denormalize :name, from: :parent
             end
           end
@@ -64,6 +64,15 @@ RSpec.describe Mongoid::Denormalize do
               new_parent = Parent.create!(name: 'new_parent')
               child.update_attributes(parent: new_parent)
               expect(child.reload.parent_name).to eq('new_parent')
+            end
+
+            it 'clear denormalized fields' do
+              parent = Parent.create!(name: 'parent')
+              child = Child.create!(parent: parent)
+
+              child.update_attributes(parent: nil)
+              expect(child.reload.parent_name).not_to eq('parent')
+              expect(child.reload.parent_name).to eq(nil)
             end
           end
         end
@@ -121,7 +130,7 @@ RSpec.describe Mongoid::Denormalize do
                 include Mongoid::Document
                 include Mongoid::Denormalize
 
-                belongs_to :parent
+                belongs_to :parent, optional: true
               end
             end
 
@@ -153,7 +162,7 @@ RSpec.describe Mongoid::Denormalize do
                   include Mongoid::Document
                   include Mongoid::Denormalize
 
-                  belongs_to :parent, inverse_of: :items
+                  belongs_to :parent, inverse_of: :items, optional: true
                   denormalize :name, from: :parent
                 end
               end
@@ -195,7 +204,7 @@ RSpec.describe Mongoid::Denormalize do
               include Mongoid::Document
               include Mongoid::Denormalize
 
-              belongs_to :parent, inverse_of: :child
+              belongs_to :parent, inverse_of: :child, optional: true
               denormalize :name, from: :parent
             end
           end
@@ -219,12 +228,25 @@ RSpec.describe Mongoid::Denormalize do
               parent.update_attributes(name: 'new_name')
               expect(child.reload.parent_name).to eq('new_name')
             end
+
+            it 'clear denormalized fields' do
+              parent = Parent.create!(name: 'parent')
+              child = Child.create!(parent: parent)
+
+              child.update_attributes(parent: nil)
+              expect(child.reload.parent_name).not_to eq('parent')
+              expect(child.reload.parent_name).to eq(nil)
+            end
           end
 
           context 'when child does not exist' do
             it 'do anything' do
               parent = Parent.create!(name: 'parent')
               parent.update_attributes(name: 'new_name')
+              child = Child.create!(parent: nil)
+
+              expect(child.reload.parent_name).not_to eq('parent')
+              expect(child.reload.parent_name).to eq(nil)
             end
           end
         end
@@ -271,7 +293,7 @@ RSpec.describe Mongoid::Denormalize do
               include Mongoid::Document
               include Mongoid::Denormalize
 
-              belongs_to :parent
+              belongs_to :parent, optional: true
               denormalize :name, from: :parent, as: :custom_name
               denormalize :age, :city, from: :parent, as: %i[custom_age custom_city]
             end
@@ -335,6 +357,24 @@ RSpec.describe Mongoid::Denormalize do
               expect(@child.reload).not_to respond_to(:parent_name)
             end
           end
+
+          context 'when destroy relation' do
+            before do
+              @parent = Parent.create!(name: 'parent')
+              @child = Child.create!(parent: @parent)
+
+              @child.update_attributes(parent: nil)
+            end
+
+            it 'updates denormalized fields' do
+              expect(@child.reload.custom_name).not_to eq(@parent.name)
+              expect(@child.reload.custom_name).to eq(nil)
+            end
+
+            it 'doesn\'t create the old from_field' do
+              expect(@child.reload).not_to respond_to(:parent_name)
+            end
+          end
         end
 
         context 'when the number of fields is distinct of :as option values' do
@@ -350,7 +390,7 @@ RSpec.describe Mongoid::Denormalize do
               include Mongoid::Document
               include Mongoid::Denormalize
 
-              belongs_to :parent
+              belongs_to :parent, optional: true
             end
           end
 
@@ -383,7 +423,7 @@ RSpec.describe Mongoid::Denormalize do
               include Mongoid::Document
               include Mongoid::Denormalize
 
-              belongs_to :parent
+              belongs_to :parent, optional: true
               denormalize :name, from: :parent, prefix: :new_prefix
             end
           end
@@ -431,6 +471,23 @@ RSpec.describe Mongoid::Denormalize do
             end
           end
 
+          context 'when destroy relation' do
+            before do
+              @parent = Parent.create(name: 'name')
+              @child = Child.create(parent: @parent)
+              @child.update_attributes(parent: nil)
+            end
+
+            it 'updates childs denormalized fields' do
+              expect(@child.reload.new_prefix_name).not_to eq(@parent.name)
+              expect(@child.reload.new_prefix_name).to eq(nil)
+            end
+
+            it 'doesn\'t create the old from_field' do
+              expect(@child.reload).not_to respond_to(:parent_name)
+            end
+          end
+
           context 'when updates parent denormalized field' do
             before do
               @parent = Parent.create(name: 'name')
@@ -463,7 +520,7 @@ RSpec.describe Mongoid::Denormalize do
               include Mongoid::Document
               include Mongoid::Denormalize
 
-              belongs_to :parent
+              belongs_to :parent, optional: true
               denormalize :name, from: :parent, child_callback: :before_validation
             end
           end
@@ -495,6 +552,20 @@ RSpec.describe Mongoid::Denormalize do
               expect(child.parent_name).to eq('parent')
               child.valid?
               expect(child.parent_name).to eq('new_parent')
+            end
+          end
+
+          context 'when destroy relation' do
+            it 'uses specified callback to denormalize' do
+              parent = Parent.create!(name: 'parent')
+              child = Child.create!(parent: parent)
+
+              child.parent = nil
+
+              expect(child.parent_name).to eq('parent')
+              child.valid?
+              expect(child.parent_name).not_to eq('parent')
+              expect(child.parent_name).to eq(nil)
             end
           end
         end
