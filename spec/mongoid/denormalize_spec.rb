@@ -21,7 +21,11 @@ RSpec.describe Mongoid::Denormalize do
               include Mongoid::Document
               include Mongoid::Denormalize
 
-              belongs_to :parent, optional: true
+              if Mongoid::Compatibility::Version.mongoid5_or_older?
+                belongs_to :parent
+              elsif Mongoid::Compatibility::Version.mongoid6_or_newer?
+                belongs_to :parent, optional: true
+              end
               denormalize :name, from: :parent
             end
           end
@@ -90,7 +94,11 @@ RSpec.describe Mongoid::Denormalize do
               include Mongoid::Document
               include Mongoid::Denormalize
 
-              belongs_to :top, class_name: 'Parent'
+              if Mongoid::Compatibility::Version.mongoid5_or_older?
+                belongs_to :top, class_name: 'Parent'
+              elsif Mongoid::Compatibility::Version.mongoid6_or_newer?
+                belongs_to :top, class_name: 'Parent', optional: true
+              end
               denormalize :name, from: :top
             end
           end
@@ -130,7 +138,11 @@ RSpec.describe Mongoid::Denormalize do
                 include Mongoid::Document
                 include Mongoid::Denormalize
 
-                belongs_to :parent, optional: true
+                if Mongoid::Compatibility::Version.mongoid5_or_older?
+                  belongs_to :parent
+                elsif Mongoid::Compatibility::Version.mongoid6_or_newer?
+                  belongs_to :parent, optional: true
+                end
               end
             end
 
@@ -162,7 +174,11 @@ RSpec.describe Mongoid::Denormalize do
                   include Mongoid::Document
                   include Mongoid::Denormalize
 
-                  belongs_to :parent, inverse_of: :items, optional: true
+                  if Mongoid::Compatibility::Version.mongoid5_or_older?
+                    belongs_to :parent, inverse_of: :items
+                  elsif Mongoid::Compatibility::Version.mongoid6_or_newer?
+                    belongs_to :parent, inverse_of: :items, optional: true
+                  end
                   denormalize :name, from: :parent
                 end
               end
@@ -204,7 +220,11 @@ RSpec.describe Mongoid::Denormalize do
               include Mongoid::Document
               include Mongoid::Denormalize
 
-              belongs_to :parent, inverse_of: :child, optional: true
+              if Mongoid::Compatibility::Version.mongoid5_or_older?
+                belongs_to :parent, inverse_of: :child
+              elsif Mongoid::Compatibility::Version.mongoid6_or_newer?
+                belongs_to :parent, inverse_of: :child, optional: true
+              end
               denormalize :name, from: :parent
             end
           end
@@ -293,7 +313,11 @@ RSpec.describe Mongoid::Denormalize do
               include Mongoid::Document
               include Mongoid::Denormalize
 
-              belongs_to :parent, optional: true
+              if Mongoid::Compatibility::Version.mongoid5_or_older?
+                belongs_to :parent
+              elsif Mongoid::Compatibility::Version.mongoid6_or_newer?
+                belongs_to :parent, optional: true
+              end
               denormalize :name, from: :parent, as: :custom_name
               denormalize :age, :city, from: :parent, as: %i[custom_age custom_city]
             end
@@ -390,7 +414,11 @@ RSpec.describe Mongoid::Denormalize do
               include Mongoid::Document
               include Mongoid::Denormalize
 
-              belongs_to :parent, optional: true
+              if Mongoid::Compatibility::Version.mongoid5_or_older?
+                belongs_to :parent
+              elsif Mongoid::Compatibility::Version.mongoid6_or_newer?
+                belongs_to :parent, optional: true
+              end
             end
           end
 
@@ -423,7 +451,11 @@ RSpec.describe Mongoid::Denormalize do
               include Mongoid::Document
               include Mongoid::Denormalize
 
-              belongs_to :parent, optional: true
+              if Mongoid::Compatibility::Version.mongoid5_or_older?
+                belongs_to :parent
+              elsif Mongoid::Compatibility::Version.mongoid6_or_newer?
+                belongs_to :parent, optional: true
+              end
               denormalize :name, from: :parent, prefix: :new_prefix
             end
           end
@@ -520,7 +552,11 @@ RSpec.describe Mongoid::Denormalize do
               include Mongoid::Document
               include Mongoid::Denormalize
 
-              belongs_to :parent, optional: true
+              if Mongoid::Compatibility::Version.mongoid5_or_older?
+                belongs_to :parent
+              elsif Mongoid::Compatibility::Version.mongoid6_or_newer?
+                belongs_to :parent, optional: true
+              end
               denormalize :name, from: :parent, child_callback: :before_validation
             end
           end
