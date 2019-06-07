@@ -75,7 +75,6 @@ RSpec.describe Mongoid::Denormalize do
               child = Child.create!(parent: parent)
 
               child.update_attributes(parent: nil)
-              expect(child.reload.parent_name).not_to eq('parent')
               expect(child.reload.parent_name).to eq(nil)
             end
           end
@@ -254,7 +253,6 @@ RSpec.describe Mongoid::Denormalize do
               child = Child.create!(parent: parent)
 
               child.update_attributes(parent: nil)
-              expect(child.reload.parent_name).not_to eq('parent')
               expect(child.reload.parent_name).to eq(nil)
             end
           end
@@ -265,7 +263,6 @@ RSpec.describe Mongoid::Denormalize do
               parent.update_attributes(name: 'new_name')
               child = Child.create!(parent: nil)
 
-              expect(child.reload.parent_name).not_to eq('parent')
               expect(child.reload.parent_name).to eq(nil)
             end
           end
@@ -391,7 +388,6 @@ RSpec.describe Mongoid::Denormalize do
             end
 
             it 'updates denormalized fields' do
-              expect(@child.reload.custom_name).not_to eq(@parent.name)
               expect(@child.reload.custom_name).to eq(nil)
             end
 
@@ -511,7 +507,6 @@ RSpec.describe Mongoid::Denormalize do
             end
 
             it 'updates childs denormalized fields' do
-              expect(@child.reload.new_prefix_name).not_to eq(@parent.name)
               expect(@child.reload.new_prefix_name).to eq(nil)
             end
 
@@ -600,7 +595,6 @@ RSpec.describe Mongoid::Denormalize do
 
               expect(child.parent_name).to eq('parent')
               child.valid?
-              expect(child.parent_name).not_to eq('parent')
               expect(child.parent_name).to eq(nil)
             end
           end
