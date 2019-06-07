@@ -60,6 +60,16 @@ RSpec.describe Mongoid::Denormalize do
             end
           end
 
+          context 'when updates children denormalized field' do
+            it 'updates childs denormalized fields' do
+              parent = Parent.create!(name: 'parent')
+              child = Child.create!(parent: parent)
+
+              child.update_attributes(parent_name: 'new_name')
+              expect(child.reload.parent_name).to eq('parent')
+            end
+          end
+
           context 'when updates relation' do
             it 'updates denormalized fields' do
               parent = Parent.create!(name: 'parent')
@@ -193,12 +203,20 @@ RSpec.describe Mongoid::Denormalize do
                 )
               end
 
-              it 'updates childs denormalized fields' do
+              it 'updates parent denormalized fields' do
                 parent = Parent.create!(name: 'parent')
                 child = Child.create!(parent: parent)
 
                 parent.update_attributes(name: 'new_name')
                 expect(child.reload.parent_name).to eq('new_name')
+              end
+
+              it 'updates child denormalized fields' do
+                parent = Parent.create!(name: 'parent')
+                child = Child.create!(parent: parent)
+
+                child.update_attributes(parent_name: 'new_name')
+                expect(child.reload.parent_name).to eq('parent')
               end
             end
           end
@@ -240,7 +258,7 @@ RSpec.describe Mongoid::Denormalize do
           end
 
           context 'when child exists' do
-            it 'updates childs denormalized fields' do
+            it 'updates parent denormalized fields' do
               parent = Parent.create!(name: 'parent')
               child = Child.create!(parent: parent)
 
@@ -254,6 +272,14 @@ RSpec.describe Mongoid::Denormalize do
 
               child.update_attributes(parent: nil)
               expect(child.reload.parent_name).to eq(nil)
+            end
+
+            it 'updates child denormalized fields' do
+              parent = Parent.create!(name: 'parent')
+              child = Child.create!(parent: parent)
+
+              child.update_attributes(parent_name: 'new_name')
+              expect(child.reload.parent_name).to eq('parent')
             end
           end
 
