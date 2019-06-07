@@ -55,7 +55,11 @@ module Mongoid
       from = options[:from].to_s
 
       child_class.send(options[:child_callback] || 'before_save') do
-        if send("#{from}_id_changed?")
+        any_field_changed = fields.select do |field|
+          send("#{field[:as]}_changed?")
+        end
+
+        if send("#{from}_id_changed?") || any_field_changed
           fields.each do |field|
             send("#{field[:as]}=", send(from)&.send(field[:name]))
           end
