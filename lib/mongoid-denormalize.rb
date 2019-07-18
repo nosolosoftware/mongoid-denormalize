@@ -16,8 +16,8 @@ module Mongoid
 
         fields = Mongoid::Denormalize.get_fields_with_names(self, fields, options)
 
-        # Add fields to model
-        fields.each { |field| field field[:as], type: field[:type] }
+        # Add fields to model (avoid overwrite)
+        fields.each { |field| field(field[:as]) unless self.fields[field[:as].to_s] }
 
         # Add hooks
         Mongoid::Denormalize.add_hook_to_child(self, fields, options)
