@@ -85,11 +85,13 @@ module Mongoid
         next if attributes.blank?
 
         case relation.relation.to_s
-        when 'Mongoid::Relations::Referenced::One'
+        when 'Mongoid::Relations::Referenced::One',
+             'Mongoid::Association::Referenced::HasOne::Proxy'
           if (document = send(relation.name))
             document.collection.update_one({_id: document._id}, {'$set' => attributes})
           end
-        when 'Mongoid::Relations::Referenced::Many'
+        when 'Mongoid::Relations::Referenced::Many',
+             'Mongoid::Association::Referenced::HasMany::Proxy'
           send(relation.name).update_all('$set' => attributes)
         else
           raise "Relation type unsupported: #{relation.relation}"
