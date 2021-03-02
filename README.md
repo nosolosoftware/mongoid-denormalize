@@ -1,7 +1,9 @@
 # Mongoid::Denormalize
 ![Build Status](https://travis-ci.org/nosolosoftware/mongoid-denormalize.svg?branch=master)
 
-Helper module for denormalizing association attributes in Mongoid models
+Helper module for denormalizing association attributes in Mongoid models.
+
+This gem is tested on mongoid 6.x and 7.x.
 
 ## Installation
 
@@ -131,7 +133,7 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/rjurado01/mongoid-denormalize.
+Bug reports and pull requests are welcome on GitHub at https://github.com/nosolosoftware/mongoid-denormalize.
 
 ## License
 
